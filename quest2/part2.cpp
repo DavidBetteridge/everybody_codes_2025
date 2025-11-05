@@ -53,6 +53,16 @@ public:
         return Complex(lhs, rhs );
     }
 
+    bool operator<(const Complex& n) const
+    {
+        return (_x < n._x) || (_y < n._y);
+    }
+
+    bool operator>(const Complex& n) const
+    {
+        return (_x > n._x) || (_y > n._y);
+    }    
+
     friend std::ostream& operator<<(std::ostream& os, const Complex& complex);
 
 };
@@ -66,19 +76,21 @@ std::ostream& operator<<(std::ostream& os, const Complex& complex)
 
 int main()
 {
-    Complex A(35300,-64910); // A=[-79097,-15068]
-    Complex Size(1000,1000);
-    Complex DivideBy(100000,100000);
+    const int left = -79097;
+    const int top = -15068;
 
-    Complex BottonRight = A + Size;
+    Complex A(left,top); 
+    Complex DivideBy(100000,100000);
+    Complex Upper(1000000,1000000);
+    Complex Lower(-1000000,-1000000);
 
     auto total = 0;
     for(auto x = 0; x < 101; x++)
     {
-        auto col = A.X() + (x * 10);
+        auto col = left + (x * 10);
         for(auto y = 0; y < 101; y++)
         {
-            auto row = A.Y() + (y * 10);
+            auto row = top + (y * 10);
 
             Complex P(col,row);
             Complex R(0,0);
@@ -90,7 +102,7 @@ int main()
                 R = R / DivideBy;
                 R = R + P;
 
-                if (R.X() > 1000000 || R.X() <  -1000000 || R.Y()> 1000000 || R.Y() <  -1000000)
+                if (R > Upper || R < Lower)
                 {
                     engrave=false;
                     break;
@@ -98,16 +110,8 @@ int main()
 
             }
             if (engrave)
-            {
                 total++;
-                std::cout << 'x';
-            }
-            else
-            {
-                std::cout << '.';
-            }
         }
-        std::cout << std::endl;
     }
 
     std::cout << total << std::endl;
