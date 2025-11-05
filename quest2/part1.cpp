@@ -13,10 +13,6 @@ public:
     {
     }   
 
-    Complex(const Complex& copy) = default;
-    Complex& operator=(const Complex& right) = default;
-
-
     // [X1,Y1] + [X2,Y2] = [X1 + X2, Y1 + Y2]
     Complex operator+(const Complex& n)
     {
@@ -64,15 +60,12 @@ int main()
     Complex R(0,0);
     Complex Ten(10,10);
 
-    Complex Z = A + R;
-
     for (auto round = 0; round < 3; round++)
     {
-        auto R1 = R * R;
-        auto R2 = R1 / Ten;
-        Complex Z = R2 + A;
-        R = Z;
+        R = R * R;
+        R = R / Ten;
+        R = R + A;
     }
 
-    std::cout << R << std::endl;;
+    std::cout << R << std::endl;
 }
