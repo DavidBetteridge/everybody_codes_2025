@@ -98,7 +98,6 @@ int main()
     const int left = -79097;
     const int top = -15068;
 
-    Complex A(left,top); 
     Complex DivideBy(100000,100000);
     Complex Upper(1000000,1000000);
     Complex Lower(-1000000,-1000000);
