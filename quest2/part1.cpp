@@ -14,7 +14,7 @@ public:
     }   
 
     // [X1,Y1] + [X2,Y2] = [X1 + X2, Y1 + Y2]
-    Complex operator+(const Complex& n)
+    Complex operator+(const Complex& n) const
     {
         auto lhs = n._x + _x;
         auto rhs = n._y + _y;
@@ -22,7 +22,7 @@ public:
     }
 
     // [X1,Y1] * [X2,Y2] = [X1 * X2 - Y1 * Y2, X1 * Y2 + Y1 * X2]
-    Complex operator*(const Complex& n)
+    Complex operator*(const Complex& n) const
     {
         auto X1 = _x;
         auto Y1 = _y;
@@ -36,7 +36,7 @@ public:
     }
 
     // [X1,Y1] / [X2,Y2] = [X1 / X2, Y1 / Y2]
-    Complex operator/(const Complex& n)
+    Complex operator/(const Complex& n) const
     {
         auto lhs = std::floor(_x / n._x);
         auto rhs = std::floor(_y / n._y);
