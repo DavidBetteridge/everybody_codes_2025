@@ -14,16 +14,12 @@ int main()
         if (direction == "L") 
         {
             auto wordIndex = mod(-distance, words.size());
-            auto temp = words[0];
-            words[0] = words[wordIndex];
-            words[wordIndex] = temp;
+            std::swap(words[0], words[wordIndex]);
         }
         else
         {
             auto wordIndex = distance % words.size();
-            auto temp = words[0];
-            words[0] = words[wordIndex];
-            words[wordIndex] = temp;            
+            std::swap(words[0], words[wordIndex]);
         }
     }
 
