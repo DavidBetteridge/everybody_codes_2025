@@ -11,11 +11,7 @@ int main()
     for (std::string i : crates)
         s.insert(std::stoi(i));
 
-    // Grab the 20 smallest...
-    std::vector<int> smallest(s.size());
-    std::copy_n(s.begin(), 20, smallest.begin());
-
-    // ...and sum
-    auto total = std::accumulate(smallest.begin(), smallest.end(), 0);
-    std::cout << total << std::endl;
+    auto total2 = std::accumulate(s.begin(), std::next(s.begin(), 20), 0);    
+    std::cout << total2 << std::endl;
+   
 }
