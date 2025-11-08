@@ -8,7 +8,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(Example)
 
-set(SOURCES part1.cpp)
+set(SOURCES part3.cpp)
 
 add_executable(main ${SOURCES})
 

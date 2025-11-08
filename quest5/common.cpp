@@ -28,8 +28,8 @@ std::vector<std::string> readLinesFromFile(std::string filename)
     std::vector<std::string> lines;
     std::ifstream file(filename);
     if (!file.is_open())
-    {
-        std::cerr << "Error: Could not open file." << std::endl;
+    { 
+        std::cerr << "Error: Could not open file. " << filename << std::endl;
         return lines;
     }
 
