@@ -8,6 +8,24 @@ struct segment
     int spine = 0;
     int right = 0;
     segment* next = nullptr;
+
+    void print()
+    {
+        std::cout << left << '-' << spine << "-" << right << std::endl;
+        if (next != nullptr)
+        {
+            std::cout << "  |  " << std::endl;
+            next->print();
+        }
+    }
+
+    void printSpine()
+    {
+        std::cout << spine;
+        if (next != nullptr)
+            next->printSpine();
+    }
+
 };
 
 int main()
@@ -58,16 +76,18 @@ int main()
             }
         }
     }
-
+    
+    top.printSpine();
     std::cout << std::endl;
-    segment* walk = &top;
-    while (walk != nullptr)
-    {
-        std::cout << walk->left << '-' << walk->spine << "-" << walk->right << std::endl;
-        std::cout << "  |  " << std::endl;
-        if (walk != &top)
-            delete walk;
-        walk = walk->next;
-    }
+
+    top.print();
+
+    // segment* walk = &top;
+    // while (walk != nullptr)
+    // {
+    //     if (walk != &top)
+    //         delete walk;
+    //     walk = walk->next;
+    // }
 
 }
