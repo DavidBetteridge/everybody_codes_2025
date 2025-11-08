@@ -28,15 +28,15 @@ struct segment
 
 };
 
-int main()
+long long score(std::string line)
 {
-    auto lines = readLinesFromFile("input1.txt");
-    auto preamble = lines[0].find_first_of(":");
-    auto notes = split(lines[0].substr(preamble+1), ",");
+    auto preamble = line.find_first_of(":");
+    auto notes = split(line.substr(preamble+1), ",");
 
     std::vector<int> numbers;
     std::transform(notes.begin(), notes.end(), std::back_inserter(numbers), [](const std::string& str) { return std::stoi(str); });
 
+    long long quality = 0;
     segment top;
     for (const auto &number : numbers)
     {
@@ -49,6 +49,7 @@ int main()
             {
                 toCheck->spine = number;
                 allocated = true;
+                quality = number;
             }
             else if (number < toCheck->spine && toCheck->left == 0)
             {
@@ -67,6 +68,7 @@ int main()
                 newSegment->spine = number;
                 toCheck->next = newSegment;
                 allocated = true;
+                quality = (quality * 10) + number;
             }
             else
             {
@@ -74,18 +76,28 @@ int main()
             }
         }
     }
-    
-    top.printSpine();
-    std::cout << std::endl;
 
-    top.print();
+    return quality;
+}
 
-    // segment* walk = &top;
-    // while (walk != nullptr)
-    // {
-    //     if (walk != &top)
-    //         delete walk;
-    //     walk = walk->next;
-    // }
+int main()
+{
+    auto lines = readLinesFromFile("input2.txt");
 
+    long long max_quality = 0;
+    long long min_quality = LLONG_MAX;
+    for (const auto &line : lines)
+    {
+        auto quality = score(line);
+
+        if (quality > max_quality)
+            max_quality = quality;
+
+        if (quality < min_quality)
+            min_quality = quality;
+    }
+
+    std::cout << max_quality - min_quality << std::endl;
+
+    return 0;
 }
