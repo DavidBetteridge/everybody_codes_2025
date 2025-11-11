@@ -131,17 +131,9 @@ int main()
     for (const auto &sword : swords)
     {
         checksum += (++position * sword->identifier);
-        
-
-        if (sword->identifier == 314 || sword->identifier == 347)
-        {
-            std::cout << sword->identifier << std::endl;
-            sword->print();
-        }
-
     }
 
     std::cout << checksum << std::endl;
-
+//31168871
     return 0;
 }
