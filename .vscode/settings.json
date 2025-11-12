@@ -55,5 +55,6 @@
         "set": "cpp",
         "__tree": "cpp",
         "map": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/Users/davidbetteridge/everybody_codes_2025/quest7"
 }
