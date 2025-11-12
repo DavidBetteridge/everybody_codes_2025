@@ -1,8 +1,9 @@
 #include "common.cpp"
 #include <map>
 #include <unordered_map>
+#include <vector>
 
-int count(std::map<char, std::string> rules, std::string word, std::unordered_map<std::string, int>& seen)
+int count(std::map<char, std::vector<char>>& rules, std::string word, std::unordered_map<std::string, int>& seen)
 {
     auto total = 0;
     auto length = word.size();
@@ -20,11 +21,10 @@ int count(std::map<char, std::string> rules, std::string word, std::unordered_ma
     {
         if (rules.contains(letter))
         {
-            auto rule = rules[letter];
-            auto nextChars = split(rule, ",");
+            auto nextChars = rules[letter];
             for (const auto &next : nextChars)
             {
-                total += count(rules, word + next[0], seen);
+                total += count(rules, word + next, seen);
             }
         }
     }
@@ -37,11 +37,12 @@ int main()
     auto lines = readLinesFromFile("input3.txt");
     auto words = split(lines[0], ",");
 
-    std::map<char, std::string> rules;
+    std::map<char, std::vector<char>> rules;
     for(auto n=2; n<lines.size(); n++) 
     {
         auto rule = split(lines[n], " > ");
-        rules[rule[0][0]] = rule[1];
+        auto next = split_to_char(rule[1], ",");
+        rules[rule[0][0]] = next;
     }
 
 
@@ -57,7 +58,8 @@ int main()
             if (rules.contains(word[k]))
             {
                 auto rule = rules[word[k]];
-                if (!rule.contains(word[k+1]))
+
+                if(std::find(rule.begin(), rule.end(), word[k+1]) == rule.end())
                     ok = false;
             }
             else
@@ -73,6 +75,7 @@ int main()
         }
     }
 
+    //4425012
     std::cout << total << std::endl;
     return 0;
 }

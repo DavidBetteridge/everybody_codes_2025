@@ -23,6 +23,23 @@ std::vector<std::string> split(std::string text, std::string sep)
     return list;
 }
 
+std::vector<char> split_to_char(std::string text, std::string sep)
+{
+    std::vector<char> list;
+    int start = 0;
+    auto end = text.find(sep, start + 1);
+    while (start < text.length())
+    {
+        end = text.find(sep, start + 1);
+        if (end == std::string::npos)
+            end = text.length();
+
+        list.push_back(text.substr(start, end - start)[0]);
+        start = end + sep.size();
+    }
+    return list;
+}
+
 std::vector<std::string> readLinesFromFile(std::string filename)
 {
     std::vector<std::string> lines;
