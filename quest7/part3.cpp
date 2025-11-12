@@ -2,19 +2,15 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
+#include <unordered_set>
+#include <algorithm>
 
-int count(std::map<char, std::vector<char>>& rules, std::string word, std::unordered_map<std::string, int>& seen)
+int count(std::map<char, std::vector<char>>& rules, char letter, int length)
 {
     auto total = 0;
-    auto length = word.size();
-    auto letter = word[length-1];
-
-    if (seen.contains(word)) return 0;
-
     if (length >= 7 && length <= 11)
     {
         total++;
-        seen[word]=0;
     }
 
     if (length < 11)
@@ -24,7 +20,7 @@ int count(std::map<char, std::vector<char>>& rules, std::string word, std::unord
             auto nextChars = rules[letter];
             for (const auto &next : nextChars)
             {
-                total += count(rules, word + next, seen);
+                total += count(rules, next, length + 1);
             }
         }
     }
@@ -37,6 +33,8 @@ int main()
     auto lines = readLinesFromFile("input3.txt");
     auto words = split(lines[0], ",");
 
+    std::sort(words.begin(), words.end(), [] (const std::string& first, const std::string& second){ return first.size() < second.size(); });
+
     std::map<char, std::vector<char>> rules;
     for(auto n=2; n<lines.size(); n++) 
     {
@@ -46,32 +44,45 @@ int main()
     }
 
 
-    auto indice = 0;
     auto total = 0;
-    std::unordered_map<std::string, int> seen;
+    std::unordered_set<std::string> seen;
     for (const auto &word : words)
     {
-        indice++;
         auto ok = true;
-        for(auto k=0; k<word.size()-1;k++)
+
+        // Have we already processed a prefix of this work
+        for (const auto &prefix : seen)
         {
-            if (rules.contains(word[k]))
+            if (word.substr(0, prefix.size()) == prefix)
             {
-                auto rule = rules[word[k]];
-
-                if(std::find(rule.begin(), rule.end(), word[k+1]) == rule.end())
-                    ok = false;
-            }
-            else
                 ok = false;
-
-            if (!ok) break;
+                break;
+            }
         }
 
         if (ok)
         {
+            for(auto k=0; k<word.size()-1;k++)
+            {
+                if (rules.contains(word[k]))
+                {
+                    auto rule = rules[word[k]];
+
+                    if(std::find(rule.begin(), rule.end(), word[k+1]) == rule.end())
+                        ok = false;
+                }
+                else
+                    ok = false;
+
+                if (!ok) break;
+            }
+            seen.insert(word);
+        }
+        
+        if (ok)
+        {
             // Prefix is valid
-            total += count(rules, word, seen);
+            total += count(rules, word[word.size()-1], word.size());
         }
     }
 
