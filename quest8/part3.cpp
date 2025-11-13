@@ -7,15 +7,6 @@ int main()
     auto lines = readLinesFromFile("input3.txt");
     auto notes = splitToInt(lines[0], ",");
 
-    // Notes into strings
-    std::vector<int> stringStart;
-    std::vector<int> stringEnd;
-    for(auto n=0; n<notes.size()-1; n++)
-    {
-        stringStart.push_back(notes[n]);
-        stringEnd.push_back(notes[n+1]);
-    }
-
     auto total = 0;
     for(auto from=1; from<numberOfNails; from++)
     {
@@ -25,10 +16,10 @@ int main()
             auto aE = to - rotation;
 
             auto knots = 0;
-            for(auto p=0; p<stringStart.size(); p++)
+            for(auto p=0; p<notes.size()-1; p++)
             {
-                auto s = stringStart[p];
-                auto e = stringEnd[p];
+                auto s = notes[p];
+                auto e = notes[p+1];
 
                 s-= rotation;
                 if (s < 1)
@@ -38,21 +29,25 @@ int main()
                 if (e < 1)
                     e+=numberOfNails;
 
+                // Same line
                 if (s == 1 && e == aE)
                 {
                     knots++;
                     continue;
                 }
 
+                // Same line
                 if (e == 1 && s == aE)
                 {
                     knots++;
                     continue;
                 }
 
+                // Same start or finish (but not both - from above)
                 if (s == 1 || e == 1 || s == aE || e == aE)
                     continue;
 
+                // Crosses
                 if (s < aE && e > aE)
                     knots++;
                 if (s > aE && e < aE)
