@@ -1,50 +1,48 @@
 #include "common.cpp"
 #include <set>
 
+static std::array<std::pair<int,int>, 8> moves = {
+    std::pair<int,int>(-2,-1 ),
+    std::pair<int,int>(-2,+1 ),
+    std::pair<int,int>(+2,-1 ),
+    std::pair<int,int>(+2,+1 ),
+    std::pair<int,int>(-1,-2 ),
+    std::pair<int,int>(-1,+2 ),
+    std::pair<int,int>(+1,-2 ),
+    std::pair<int,int>(+1,+2 ),
+};
 
-std::__1::vector<std::pair<int,int>> findPossibleMoves(std::__1::vector<std::__1::string>& board, std::pair<int,int> dragon)
+static int width;
+static int height;
+
+
+void eatSheep(std::set<std::pair<int,int>>& eaten, const std::__1::vector<std::__1::string>& board, int dragonX, int dragonY, int rounds)
 {
-    // 2 + 1
-    std::__1::vector<std::pair<int,int>> moves;
-
-    moves.push_back(std::pair<int,int>(dragon.first - 2, dragon.second -1 ));
-    moves.push_back(std::pair<int,int>(dragon.first - 2, dragon.second +1 ));
-    moves.push_back(std::pair<int,int>(dragon.first + 2, dragon.second -1 ));
-    moves.push_back(std::pair<int,int>(dragon.first + 2, dragon.second +1 ));
-    moves.push_back(std::pair<int,int>(dragon.first - 1, dragon.second -2 ));
-    moves.push_back(std::pair<int,int>(dragon.first - 1, dragon.second +2 ));
-    moves.push_back(std::pair<int,int>(dragon.first + 1, dragon.second -2 ));
-    moves.push_back(std::pair<int,int>(dragon.first + 1, dragon.second +2 ));
-
-    return moves;
-}
-
-void eatSheep(std::set<std::pair<int,int>>& eaten, std::__1::vector<std::__1::string>& board, std::pair<int,int> dragon, int moves)
-{
-    if (moves == 0) return;
-
-    auto width = board[0].size();
-    auto height = board.size();
-
-    auto possibleMoves = findPossibleMoves(board, dragon);
-    for (auto& possibleMove : possibleMoves)
+    for(auto m=0; m<8; m++)
     {
-        if (possibleMove.first >= 0 && possibleMove.first < width && possibleMove.second >= 0 && possibleMove.second < height)
+        auto x = dragonX + moves[m].first;
+        auto y = dragonY + moves[m].second;
+
+        if (x >= 0 && x < width && y >= 0 && y < height)
         {
-            if (board[possibleMove.second][possibleMove.first] == 'S')
+            if (board[y][x] == 'S')
             {
-                eaten.insert(possibleMove);
+                std::pair<int,int> sheep(x,y);
+                eaten.insert(sheep);
             }
+
+            if (rounds > 1)
+                eatSheep(eaten, board, x,y, rounds-1);
         }
-        eatSheep(eaten, board, possibleMove, moves-1);
     }
 }
 
 int main()
 {
+    const int rounds = 4;
     auto board = readLinesFromFile("input1.txt");
-    auto width = board[0].size();
-    auto height = board.size();
+    width = board[0].size();
+    height = board.size();
 
     std::pair<int,int> dragon(-1,-1);
 
@@ -64,7 +62,7 @@ int main()
 
 
     std::set<std::pair<int,int>> eaten;
-    eatSheep(eaten, board, dragon, 4);
+    eatSheep(eaten, board, dragon.first, dragon.second, rounds);
 
     std::cout << eaten.size() << std::endl;
 
