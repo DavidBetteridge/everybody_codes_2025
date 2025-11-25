@@ -9,59 +9,71 @@ static std::array<std::pair<int,int>, 4> diagonals = {
 
 int main()
 {
+    static std::array<std::bitset<34>, 34> board1 = {0}; 
+    static std::array<std::bitset<34>, 34> board2 = {0}; 
+    const int width = 34;
+    const int height = 34;
+
     auto lines = readLinesFromFile("input2.txt");
-    auto width = lines[0].size();
-    auto height = lines.size();
-    std::string tiles;
-    for (const auto &line : lines)
-        tiles+=line;
-
-    auto total = 0;
-    for(auto round=0;round<2025;round++)
+    const long rounds = 2025;
+    for(auto row=0;row<height;row++)
     {
-        std::string nextTiles;
-
-        for(auto i=0;i<tiles.size();i++)
+        for(auto column=0;column<width;column++)
         {
-            auto x = i % width;
-            auto y = (i - x) / width;
+            board1[row].set(column, lines[row][column] == '#');
+        }
+    }
 
-            auto activeDiagonals = 0;
-            for (const auto &diagonal : diagonals)
+    long total = 0;
+    auto previousBoard = &board1;
+    auto nextBoard = &board2;
+
+    for(auto round=0;round<rounds;round++)
+    {
+        for(auto row=0;row<height;row++)
+        {
+            for(auto column=0;column<width;column++)
             {
-                auto newX = x + diagonal.first;
-                auto newY = y + diagonal.second;
-                if (newX >= 0 && newY >= 0 && newX < width && newY < height )
+
+                // Count active diagonals 
+                auto activeDiagonals = 0;
+                for (const auto &diagonal : diagonals)
                 {
-                    auto index = (newY * width) + newX;
-                    if (tiles[index] == '#')
-                        activeDiagonals++;                    
+                    auto newX = column + diagonal.first;
+                    auto newY = row + diagonal.second;
+                    if (newX >= 0 && newY >= 0 && newX < width && newY < height )
+                    {
+                        if ((*previousBoard)[newY].test(newX))
+                            activeDiagonals++;                    
+                    }
                 }
-            }
-            if (tiles[i] == '#')
-            {
-                if (activeDiagonals % 2 == 1)
+
+                if ((*previousBoard)[row].test(column))
                 {
-                    nextTiles+='#';
-                    total++;
+                    if (activeDiagonals % 2 == 1)
+                    {
+                        (*nextBoard)[row].set(column,true);
+                        total++;
+                    }
+                    else
+                        (*nextBoard)[row].set(column,false);
                 }
                 else
-                    nextTiles+='.';
-            }
-            else
-            {
-                if (activeDiagonals % 2 == 0)
                 {
-                    nextTiles+='#';
-                    total++;
+                    if (activeDiagonals % 2 == 0)
+                    {
+                        (*nextBoard)[row].set(column,true);
+                        total++;
+                    }
+                    else
+                        (*nextBoard)[row].set(column,false);
                 }
-                else
-                    nextTiles+='.';
             }
         }
 
-        tiles = nextTiles;
-        
+        std::cout << total << std::endl;
+        std::swap(previousBoard, nextBoard);
+       
     }
 
     std::cout << total << std::endl;

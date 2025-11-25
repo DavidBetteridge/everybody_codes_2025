@@ -11,26 +11,35 @@ static std::array<std::pair<int,int>, 4> diagonals = {
 
 int main()
 {
-    auto lines = readLinesFromFile("sample3.txt");
-    // auto width = lines[0].size();
-    // auto height = lines.size();
-    // std::string tiles;
-    // for (const auto &line : lines)
-    //     tiles+=line;
-
-    
     static std::array<std::bitset<34>, 34> board1 = {0}; 
     static std::array<std::bitset<34>, 34> board2 = {0}; 
 
-    auto total = 0;
+    // auto lines = readLinesFromFile("sample3.txt");
+    // const int width = 34;
+    // const int height = 34;
+    //const long rounds = 1000000000;
+
+    auto lines = readLinesFromFile("input2.txt");
+    auto width = lines[0].size();
+    auto height = lines.size();
+    const long rounds = 2025;
+    for(auto row=0;row<height;row++)
+    {
+        for(auto column=0;column<width;column++)
+        {
+            board1[row].set(column, lines[row][column] == '#');
+        }
+    }
+
+    long total = 0;
     auto previousBoard = &board1;
     auto nextBoard = &board2;
 
-    for(auto round=0;round<1000000000;round++)
+    for(auto round=0;round<rounds;round++)
     {
-        for(auto row=0;row<34;row++)
+        for(auto row=0;row<height;row++)
         {
-            for(auto column=0;column<34;column++)
+            for(auto column=0;column<width;column++)
             {
 
                 // Count active diagonals 
@@ -41,7 +50,6 @@ int main()
                     auto newY = row + diagonal.second;
                     if (newX >= 0 && newY >= 0 && newX < 34 && newY < 34 )
                     {
-                        auto index = (newY * 34) + newX;
                         if ((*previousBoard)[newY].test(newX))
                             activeDiagonals++;                    
                     }
@@ -52,6 +60,7 @@ int main()
                     if (activeDiagonals % 2 == 1)
                     {
                         (*nextBoard)[row].set(column,true);
+                        total++;
                     }
                     else
                         (*nextBoard)[row].set(column,false);
@@ -61,14 +70,15 @@ int main()
                     if (activeDiagonals % 2 == 0)
                     {
                         (*nextBoard)[row].set(column,true);
+                        total++;
                     }
                     else
                         (*nextBoard)[row].set(column,false);
                 }
-
-
             }
         }
+
+        std::cout << total << std::endl;
         std::swap(previousBoard, nextBoard);
        
     }
