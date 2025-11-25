@@ -1,4 +1,6 @@
 #include "common.cpp"
+#include <queue>
+#include <map>
 
 int main()
 {
@@ -106,4 +108,68 @@ int main()
         std::cout << std::endl;
     }
     std::cout << std::endl;
+
+    // Make sure the final position isn't wall
+    board[(currentY*width)+currentX]=false;
+
+    // Shortest path from -minX,-minY to currentX, currentY
+    std::queue<std::pair<int,int>> queue;  // Position, Distance
+    std::map<int, int> checked;
+
+    queue.push(std::make_pair((-minY*width)+-minX,0));
+    while (!queue.empty())
+    {
+        auto pos = queue.front();
+        queue.pop();
+
+        if (checked.contains(pos.first))
+            continue;
+        checked[pos.first]=0;
+
+        auto x = pos.first % width;
+        auto y = (pos.first - x) / width;
+
+
+        if (x == currentX && y == currentY)
+        {
+            std::cout << pos.second << std::endl;
+            return 0;
+        }
+
+        // Can we go West?
+        if (x > 0)
+        {
+            auto loc = (y*width)+x-1;
+            if (!board[loc])
+                queue.push(std::make_pair(loc,pos.second+1));
+        }
+
+        // Can we go North?
+        if (y > 0)
+        {
+            auto loc = ((y-1)*width)+x;
+            if (!board[loc])
+                queue.push(std::make_pair(loc,pos.second+1));
+        }
+
+        // Can we go South?
+        if (y < (height-1))
+        {
+            auto loc = ((y+1)*width)+x;
+            if (!board[loc])
+                queue.push(std::make_pair(loc,pos.second+1));
+        }
+
+        // Can we go East?
+        if (x < (width-1))
+        {
+            auto loc = (y*width)+x+1;
+            if (!board[loc])
+                queue.push(std::make_pair(loc,pos.second+1));
+        }
+
+    }
+    
+    std::cout << "No solution" << std::endl;
+
 }
