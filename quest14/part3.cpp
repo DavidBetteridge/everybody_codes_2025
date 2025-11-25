@@ -7,27 +7,23 @@ static std::array<std::pair<int,int>, 4> diagonals = {
     std::pair<int,int>(+1,+1 ),
 };
 
-// 13 8 13
-
 int main()
 {
+
+    const int width = 34;
+    const int height = 34;
+    const long rounds = 1000000000;
     static std::array<std::bitset<34>, 34> board1 = {0}; 
     static std::array<std::bitset<34>, 34> board2 = {0}; 
 
-    // auto lines = readLinesFromFile("sample3.txt");
-    // const int width = 34;
-    // const int height = 34;
-    //const long rounds = 1000000000;
 
-    auto lines = readLinesFromFile("input2.txt");
-    auto width = lines[0].size();
-    auto height = lines.size();
-    const long rounds = 2025;
-    for(auto row=0;row<height;row++)
+    static std::array<std::bitset<8>, 8> pattern = {0}; 
+    auto lines = readLinesFromFile("input3.txt");
+    for(auto row=0;row<8;row++)
     {
-        for(auto column=0;column<width;column++)
+        for(auto column=0;column<8;column++)
         {
-            board1[row].set(column, lines[row][column] == '#');
+            pattern[row].set(column, lines[row][column] == '#');
         }
     }
 
@@ -35,8 +31,9 @@ int main()
     auto previousBoard = &board1;
     auto nextBoard = &board2;
 
-    for(auto round=0;round<rounds;round++)
+    for(auto round=1000000000-10000;round<=rounds;round++)
     {
+        auto activeTiles = 0;
         for(auto row=0;row<height;row++)
         {
             for(auto column=0;column<width;column++)
@@ -48,7 +45,7 @@ int main()
                 {
                     auto newX = column + diagonal.first;
                     auto newY = row + diagonal.second;
-                    if (newX >= 0 && newY >= 0 && newX < 34 && newY < 34 )
+                    if (newX >= 0 && newY >= 0 && newX < width && newY < height )
                     {
                         if ((*previousBoard)[newY].test(newX))
                             activeDiagonals++;                    
@@ -60,7 +57,7 @@ int main()
                     if (activeDiagonals % 2 == 1)
                     {
                         (*nextBoard)[row].set(column,true);
-                        total++;
+                        activeTiles++;
                     }
                     else
                         (*nextBoard)[row].set(column,false);
@@ -70,7 +67,7 @@ int main()
                     if (activeDiagonals % 2 == 0)
                     {
                         (*nextBoard)[row].set(column,true);
-                        total++;
+                        activeTiles++;
                     }
                     else
                         (*nextBoard)[row].set(column,false);
@@ -78,11 +75,32 @@ int main()
             }
         }
 
-        std::cout << total << std::endl;
+        // Do we have a matching pattern
+        auto matches = true;
+        for(auto row=0;row<8;row++)
+        {
+            for(auto column=0;column<8;column++)
+            {
+                if (!(*nextBoard)[13+row].test(13+column) == pattern[row][column])
+                {
+                    matches = false;
+                    break;
+                }
+            }
+            if (!matches) break;
+        }
+        if (matches)
+        {
+            total++;
+            std::cout << round << " (" << activeTiles << ") " << std::endl;
+        }
+
+        
         std::swap(previousBoard, nextBoard);
        
     }
 
     std::cout << total << std::endl;
+    //1751404572
 
 }
