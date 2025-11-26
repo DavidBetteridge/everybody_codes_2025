@@ -2,14 +2,28 @@
 
 int main()
 {
-    auto lines = readLinesFromFile("input1.txt");
-    auto hops = splitToInt(lines[0], ",");
-    const int length = 90;
+    auto lines = readLinesFromFile("input2.txt");
+    auto wall = splitToInt(lines[0], ",");
 
-    auto total = 0;
-    for (const auto &hop : hops)
+    long total = 1;
+    std::vector<int> solution;
+
+    for(auto i=0;i<wall.size();i++)
     {
-        total += (length / hop);
+        // If the wall is == 1,  then i+1 must be a solution
+        // then move the solution forward
+
+        if (wall[i] == 1)
+        {
+            solution.push_back(i+1);
+            for(auto j=i;j<wall.size();j+=(i+1))
+            {
+                wall[j]--;
+            }
+            std::cout << (i+1) << std::endl;
+            total *= (i+1);
+        }
+
     }
 
     std::cout << total << std::endl;
