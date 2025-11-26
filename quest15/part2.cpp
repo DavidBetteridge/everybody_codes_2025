@@ -20,7 +20,7 @@ int main()
     for (const auto &command : commands)
     {
         auto dir = command[0];
-        auto dist = std::stoi(command.substr(1,1));
+        auto dist = std::stoi(command.substr(1,command.size()-1));
 
         if (dir == 'L')
             direction = mod(direction - 1, 4);
@@ -52,7 +52,7 @@ int main()
     for (const auto &command : commands)
     {
         auto dir = command[0];
-        auto dist = std::stoi(command.substr(1,1));
+        auto dist = std::stoi(command.substr(1,command.size()-1));
 
         if (dir == 'L')
             direction = mod(direction - 1, 4);
@@ -98,20 +98,21 @@ int main()
     }
 
     // Display the board
+    std::ofstream fout("board.txt");
     for(auto r=0;r<height;r++) {
         for(auto c=0;c<width;c++) {
             if (r == -minY && c == -minX)
-                std::cout << 'S';
+                fout<< 'S';
             else if (r == currentY && c == currentX)
-                std::cout << 'E';
+                fout<< 'E';
             else if (board[(r*width)+c])
-                std::cout << '#';
+                fout<< '#';
             else
-                std::cout << ' ';
+                fout<< ' ';
         }
-        std::cout << std::endl;
+        fout<< std::endl;
     }
-    std::cout << std::endl;
+    fout<< std::endl;
 
     // Make sure the final position isn't wall
     board[(currentY*width)+currentX]=false;
