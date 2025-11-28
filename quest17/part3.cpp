@@ -1,16 +1,9 @@
 #include "common.cpp"
 #include "queue"
 #include "map"
+#include "unordered_set"
 
-// Draw volcano at r=1
-// From S - storest path to each of the left-hand-size of @
-// From each of those find shortest paths to bottom of @
-// From each of those find shortest paths to right of @
-// From each of those find shortest paths back to S
-// Is the shortest path,  short enough?
-// Yes solution,  No increase r
-
-typedef struct vertex
+struct vertex
 {
     int index;
     int cost;
@@ -18,7 +11,7 @@ typedef struct vertex
 
 int main()
 {
-    auto lines = readLinesFromFile("sample3a.txt");
+    auto lines = readLinesFromFile("input3.txt");
     auto height = lines.size();
     auto width = lines[0].size();
     
@@ -49,6 +42,7 @@ int main()
                 times.push_back(lines[y][x] - '0');   
         }
     }
+    auto verticalLine = Xv;
 
     // Label all points with the minimum distance the radius needs to be to destroy that point.
     std::vector<int> destroyed_at;
@@ -56,7 +50,7 @@ int main()
         destroyed_at.push_back(9999);
 
     auto radius = 1;
-    while (radius <= (width/2) && radius <= (height/2))
+    while (radius <= (width/2) && radius <= height)
     {
         auto total = 0;
         for(auto Yc=0;Yc<height;Yc++)
@@ -77,20 +71,22 @@ int main()
     }
     destroyed_at[start_index] = 0;
 
-
+    auto best = std::numeric_limits<int>().max();
     radius = 1;
     while (radius <= width/2)
     {
         // All routes from S to underneath the volcano
 
         const int UNDEFINED_DIST = -1;
-        const int INFINITY_COST = 100000; //std::numeric_limits<int>().max();
+        const int INFINITY_COST = 1000000; //
         auto cmp = [](vertex left, vertex right) { return (left.cost) > (right.cost); };
 
 
         //side=0 means lhs,   side=1 means rhs
         std::vector<int> lhs;
         std::vector<int> rhs;
+        std::vector<int> prev_lhs;
+        std::vector<int> prev_rhs;
         for(auto side=0;side<=1;side++)
         {
             std::priority_queue<vertex, std::vector<vertex>, decltype(cmp)> Q(cmp);
@@ -119,6 +115,17 @@ int main()
                 auto x = index % width;
                 auto y = (index - x) / width;
                 
+                // Can't travel down the right hand side
+                if ((side == 0) && (y == Yv) && (x > Xv))
+                    continue;
+
+                // Can't travel up the left hand side
+                if ((side == 1) && (y == Yv) && (x < Xv))
+                    continue;
+
+                if (dist[u.index] / 30 > radius) 
+                    continue;
+
                 //Up
                 auto v = index-width;
                 if (y>0 && (destroyed_at[v] > radius) )
@@ -147,12 +154,7 @@ int main()
 
                 //Left
                 v = index-1;
-
-                auto ok = ((side == 0) && (x>0)) 
-                  //     || ((side == 1) && (y != Yv) && (x>=Xv - 1))
-                       || ((side == 1) && (x>=Xv));
-
-                if (x>0 && (destroyed_at[v] > radius) )
+                if ((x>0) && (destroyed_at[v] > radius) )
                 {
                     auto alt = dist[u.index] + times[v];
                     if (alt < dist[v])
@@ -165,10 +167,7 @@ int main()
 
                 //Right
                 v = index+1;
-                ok = ((side == 0) && (x<Xv)) 
-                    //   || ((side == 0) && (y != Yv) && (x < Xv + 1))
-                       || ((side == 1) && (x<(width-1)));
-                if (ok && (destroyed_at[v] > radius) )
+                if ((x<(width-1)) && (destroyed_at[v] > radius) )
                 {
                     auto alt = dist[u.index] + times[v];
                     if (alt < dist[v])
@@ -182,33 +181,78 @@ int main()
             
             for(auto targetY=Yv+1;targetY<=height;targetY++)
             {
-                auto time = dist[(targetY*width)+Xv];
-                if (destroyed_at[(targetY*width)+Xv] <= radius)
+                auto time = dist[(targetY*width)+verticalLine];
+                if (destroyed_at[(targetY*width)+verticalLine] <= radius)
                     time = -2;
 
                 if (side == 0)
                     lhs.push_back(time);
                 else
                     rhs.push_back(time);                
-
-                // auto caption = side == 0 ? "LHS " : "RHS ";
-                // std::cout << caption << radius << ' ' << targetY << " (" << times[(targetY*width)+Xv] << ") " << dist[(targetY*width)+Xv] << std::endl;
             }
+
+            if (side == 0)
+                prev_lhs = prev; //Copy
+            else
+                prev_rhs = prev; //Copy
+
         }
 
         auto j = 0;
         for(auto targetY=Yv+1;targetY<=height;targetY++)
         {
-            if (destroyed_at[(targetY*width)+Xv] > radius)
+            auto end_index = (targetY*width)+verticalLine;
+            if (destroyed_at[end_index] > radius)
             {
-                auto total = lhs[j] + rhs[j] - times[(targetY*width)+Xv];
+                auto total = lhs[j] + rhs[j] - times[end_index];
                 auto seconds = total / 30;
                 if (seconds <= radius)
                 {
-                    //44270
-                    //44118
-                    std::cout << total * seconds << std::endl;
-                    return -1;
+                    //Path from S to end_index
+                    std::unordered_set<int> S;
+                    auto u = end_index;
+                    if (prev_lhs[u] != UNDEFINED_DIST || u == start_index)
+                    {
+                        while (u != UNDEFINED_DIST)
+                        {
+                            S.insert(u);
+                            u = prev_lhs[u];
+                        }
+                    }
+
+                    u = end_index;
+                    if (prev_rhs[u] != UNDEFINED_DIST || u == start_index)
+                    {
+                        while (u != UNDEFINED_DIST)
+                        {
+                            S.insert(u);
+                            u = prev_rhs[u];
+                        }
+                    }
+
+                    // std::ofstream fout("results.html");
+                    // fout << "<code>";  
+                    // for(auto y=0;y<height;y++)
+                    // {
+                    //     for(auto x=0;x<width;x++)    
+                    //     {
+                    //         if (S.contains((y*width)+x))
+                    //             fout << "<b>";
+
+                    //         if (destroyed_at[(y*width)+x] > radius)
+                    //             fout << lines[y][x];
+                    //         else
+                    //             fout << "&nbsp;";
+
+                    //         if (S.contains((y*width)+x))
+                    //             fout << "</b>";                                
+                    //     }
+                    //     fout << "<br>" << std::endl;
+                    // }
+                    // fout << "</code>";  
+
+                    if (total * seconds < best)
+                        best = total * seconds;
                 }
             }
             j++;
@@ -216,4 +260,6 @@ int main()
 
         radius++;
     }
+
+    std::cout << best << std::endl;
 }
