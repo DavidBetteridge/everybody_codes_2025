@@ -52,7 +52,7 @@ int main()
             layer1[i].cost = bestTotal;
         }
 
-        layer0 = layer1;
+        layer0 = std::move(layer1);
         layer0x = layer1x;
     }
 
