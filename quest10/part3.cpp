@@ -1,22 +1,21 @@
 #include "common.cpp"
 #include <set>
-#include <algorithm>
 
-long moveDragon(const std::vector<int>& heights, std::vector<int>& sheep, int dragonX, int dragonY, std::string movesList);
+long moveDragon(const std::vector<size_t>& heights, std::vector<int>& sheep, int dragonX, int dragonY, const std::string& movesList);
 
-static int width;
-static int height;
+static size_t width;
+static size_t height;
 static std::__1::vector<std::__1::string> board;
 
 static std::array<std::pair<int,int>, 8> moves = {
-    std::pair<int,int>(-2,-1 ),
+    std::pair<int,int>(-1,+2 ),
     std::pair<int,int>(-2,+1 ),
     std::pair<int,int>(+2,-1 ),
     std::pair<int,int>(+2,+1 ),
     std::pair<int,int>(-1,-2 ),
-    std::pair<int,int>(-1,+2 ),
     std::pair<int,int>(+1,-2 ),
     std::pair<int,int>(+1,+2 ),
+    std::pair<int,int>(-2,-1 ),
 };
 
 
@@ -25,7 +24,7 @@ static std::array<char, 8> letters = {
 };
 
 
-long moveSheep(const std::vector<int>& heights, std::vector<int>& sheep, int dragonX, int dragonY, std::string movesList)
+long moveSheep(const std::vector<size_t>& heights, std::vector<int>& sheep, int dragonX, int dragonY, const std::string& movesList)
 
 {
     long solutions = 0;
@@ -35,38 +34,35 @@ long moveSheep(const std::vector<int>& heights, std::vector<int>& sheep, int dra
     auto allSheepDeadOrHiding = true;
     for(auto c=0; c<width; c++)
     {
-        if (sheep[c] < -1)
-        {
-            std::cout << "oh" << std::endl;
-        }
-
         if (sheep[c] == -1) continue;  // No sheep in column
-        
+
+        const auto originalSheepPosition = sheep[c];
+
         sheep[c]++;
-        
+
         if (sheep[c] == heights[c])
         {
-            // Sheep has escaped,  this isn't a valid solution
-            sheep[c]--;
+            // Sheep has escaped,  this isn't a valid solution as the dragon cannot win
+            sheep[c]=originalSheepPosition;
             continue;
         }
 
         if (sheep[c] == dragonY && c == dragonX && board[sheep[c]][c] != '#')
         {
             // Sheep has walked onto the dragon (and there isn't a hiding place)
-            sheep[c]--;
-            continue;            
+            sheep[c]=originalSheepPosition;
+            continue;
         }
 
         allSheepDeadOrHiding = false;
-        if (sheep[c] <= 0)
-        {
-            std::cout << "oh" << std::endl;
-        }
-        movesList = std::format("{0} S>{1}{2}", movesList, letters[c], (sheep[c]+1));
 
-        solutions += moveDragon(heights, sheep, dragonX, dragonY, movesList);
-        sheep[c]--;
+        auto copy_of_list = movesList;
+        copy_of_list.append(" S>");
+        copy_of_list.push_back(letters[c]);
+        copy_of_list.append(std::to_string(sheep[c]+1));
+
+        solutions += moveDragon(heights, sheep, dragonX, dragonY, copy_of_list);
+        sheep[c]=originalSheepPosition;
         dragonMoved = true;
     }
 
@@ -77,7 +73,7 @@ long moveSheep(const std::vector<int>& heights, std::vector<int>& sheep, int dra
     return solutions;
 }
 
-long moveDragon(const std::vector<int>& heights, std::vector<int>& sheep, int dragonX, int dragonY, std::string movesList)
+long moveDragon(const std::vector<size_t>& heights, std::vector<int>& sheep, int dragonX, int dragonY, const std::string& movesList)
 {
     long total = 0;
     for(auto m=0; m<8; m++)
@@ -87,7 +83,11 @@ long moveDragon(const std::vector<int>& heights, std::vector<int>& sheep, int dr
 
         if (x >= 0 && x < width && y >= 0 && y < height)
         {
-            movesList = std::format("{0} D>{1}{2}", movesList, letters[x], (y+1));
+            auto copy_of_list = movesList;
+            copy_of_list.append(" D>");
+            copy_of_list.push_back(letters[x]);
+            copy_of_list.append(std::to_string(y+1));
+
             auto originalSheepPosition = sheep[x];
             if (sheep[x] == y && board[y][x] != '#')
             {
@@ -108,12 +108,13 @@ long moveDragon(const std::vector<int>& heights, std::vector<int>& sheep, int dr
                 if (!sheepFound)
                 {
                     total++;
-                    std::cout << movesList << std::endl;
+                    std::cout << copy_of_list << std::endl;
+                    sheep[x] = originalSheepPosition;
                     continue;
                 }
             }
 
-            total += moveSheep(heights, sheep, x, y, movesList);
+            total += moveSheep(heights, sheep, x, y, copy_of_list);
 
             sheep[x] = originalSheepPosition;
         }
@@ -124,7 +125,7 @@ long moveDragon(const std::vector<int>& heights, std::vector<int>& sheep, int dr
 
 int main()
 {
-    board = readLinesFromFile("sample3a.txt");
+    board = readLinesFromFile("sample3b.txt");
     width = board[0].size();
     height = board.size();
 
@@ -153,7 +154,7 @@ int main()
 
     // Work out the heights of the columns by working up from the bottom,
     // we stop as soon as we reach a cell which isn't a hideout
-    std::vector<int> heights(width);
+    std::vector<size_t> heights(width);
     for(auto c=0; c<width; c++)
     {
         heights[c] = height;
@@ -165,7 +166,7 @@ int main()
         }
     }
 
-    auto total = 0;
+    long total = 0;
     total = moveSheep(heights, sheep, dragon.first, dragon.second, "");
     std::cout << total << std::endl;
 }
