@@ -54,7 +54,8 @@
         "unordered_set": "cpp",
         "set": "cpp",
         "__tree": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "regex": "cpp"
     },
     "cmake.sourceDirectory": "/Users/davidbetteridge/everybody_codes_2025/quest7"
 }

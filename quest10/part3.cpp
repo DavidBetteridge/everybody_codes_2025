@@ -31,7 +31,8 @@ long moveSheep(const std::vector<size_t>& heights, std::vector<int>& sheep, int 
 
     // Sheep moves first.
     auto dragonMoved = false;
-    auto allSheepDeadOrHiding = true;
+    auto at_least_one_sheep_is_blocked = false;
+    auto at_least_one_sheep_has_won = false;
     for(auto c=0; c<width; c++)
     {
         if (sheep[c] == -1) continue;  // No sheep in column
@@ -44,17 +45,17 @@ long moveSheep(const std::vector<size_t>& heights, std::vector<int>& sheep, int 
         {
             // Sheep has escaped,  this isn't a valid solution as the dragon cannot win
             sheep[c]=originalSheepPosition;
+            at_least_one_sheep_has_won = true;
             continue;
         }
 
         if (sheep[c] == dragonY && c == dragonX && board[sheep[c]][c] != '#')
         {
             // Sheep has walked onto the dragon (and there isn't a hiding place)
+            at_least_one_sheep_is_blocked = true;
             sheep[c]=originalSheepPosition;
             continue;
         }
-
-        allSheepDeadOrHiding = false;
 
         auto copy_of_list = movesList;
         copy_of_list.append(" S>");
@@ -67,7 +68,7 @@ long moveSheep(const std::vector<size_t>& heights, std::vector<int>& sheep, int 
     }
 
     // Dragon always moves
-    if (!dragonMoved && !allSheepDeadOrHiding)
+    if (!dragonMoved && at_least_one_sheep_is_blocked && !at_least_one_sheep_has_won)
         solutions += moveDragon(heights, sheep, dragonX, dragonY, movesList);
 
     return solutions;
@@ -125,11 +126,11 @@ long moveDragon(const std::vector<size_t>& heights, std::vector<int>& sheep, int
 
 int main()
 {
-    board = readLinesFromFile("sample3b.txt");
+    board = readLinesFromFile("sample3d.txt");
     width = board[0].size();
     height = board.size();
 
-    // Find the dragon and sheep starting postion
+    // Find the dragon and sheep starting position
     std::pair<int,int> dragon(-1,-1);
     std::vector<int> sheep(width);
     for(auto c=0; c<width; c++)
