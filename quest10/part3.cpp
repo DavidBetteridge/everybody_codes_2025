@@ -1,5 +1,5 @@
 #include "common.cpp"
-#include <set>
+#include <map>
 
 long moveDragon(int dragonX, int dragonY, int living_sheep);
 
@@ -8,6 +8,9 @@ static size_t height;
 static std::vector<bool> hide_outs;
 static std::vector<size_t> heights;
 static std::vector<int> sheep;
+static std::map<long, long> sheep_to_move_cache;
+static std::map<long, long> dragon_to_move_cache;
+
 
 static std::array<int, 8> moves_x = {
     -1,
@@ -33,6 +36,21 @@ static std::array<int, 8> moves_y = {
 
 long moveSheep(const  int dragonX,const  int dragonY, const int living_sheep)
 {
+
+    long key = 0;
+    for(auto c=0; c<width; c++) {
+        key = key << 3;
+        key = key + (sheep[c] == -1 ? 7 : sheep[c]);
+    }
+    key = key << 3;
+    key = key + dragonX;
+    key = key << 3;
+    key = key + dragonY;
+
+    const auto cache_key = sheep_to_move_cache.find(key);
+    if (cache_key != sheep_to_move_cache.end())
+        return sheep_to_move_cache[key];
+
     long solutions = 0;
 
     // Sheep moves first.
@@ -72,11 +90,28 @@ long moveSheep(const  int dragonX,const  int dragonY, const int living_sheep)
     if (!dragonMoved && at_least_one_sheep_is_blocked && !at_least_one_sheep_has_won)
         solutions += moveDragon(dragonX, dragonY, living_sheep);
 
+    sheep_to_move_cache[key]=solutions;
+
     return solutions;
 }
 
 long moveDragon(const int dragonX, const int dragonY, const int living_sheep)
 {
+    long key = 0;
+    for(auto c=0; c<width; c++) {
+        key = key << 3;
+        key = key + (sheep[c] == -1 ? 7 : sheep[c]);
+    }
+    key = key << 3;
+    key = key + dragonX;
+    key = key << 3;
+    key = key + dragonY;
+
+    const auto cache_key = dragon_to_move_cache.find(key);
+    if (cache_key != dragon_to_move_cache.end())
+        return dragon_to_move_cache[key];
+
+
     long total = 0;
     for(auto m=0; m<8; m++)
     {
@@ -105,12 +140,14 @@ long moveDragon(const int dragonX, const int dragonY, const int living_sheep)
         }
     }
 
+    dragon_to_move_cache[key]=total;
+
     return total;
 }
 
 int main()
 {
-    const auto board = readLinesFromFile("sample3d.txt");
+    const auto board = readLinesFromFile("input3.txt");
     width = board[0].size();
     height = board.size();
 
