@@ -7,25 +7,27 @@ struct Corrd
 {
     long x;
     long y;
+
+    Corrd(const long x,const long y) : x(x), y(y) {};
 };
 
 int main()
 {
-    auto lines = readLinesFromFile("input1.txt");
+    auto lines = readLinesFromFile("input3.txt");
     auto commands = split(lines[0], ",");
 
-    auto currentX = 0;
-    auto currentY = 0;
+    long currentX = 0;
+    long currentY = 0;
     auto direction = 3;  // 0 = East, 1=South, 2=West. 3=North
 
-    // First pass to find original corrdinates
-    std::set<int> xs;
-    std::set<int> ys;
-    std::vector<Corrd> corrds;
+    // First pass to find original coordinates
+    std::set<long> xs;
+    std::set<long> ys;
+    std::vector<Corrd> coordinates;
     for (const auto &command : commands)
     {
         auto dir = command[0];
-        auto dist = std::stoi(command.substr(1,command.size()-1));
+        long dist = std::stol(command.substr(1,command.size()-1));
 
         if (dir == 'L')
             direction = mod(direction - 1, 4);
@@ -37,85 +39,93 @@ int main()
         if (direction == 2) currentX-=dist; //West
         if (direction == 3) currentY-=dist; //North
 
+        xs.insert(currentX-1);
         xs.insert(currentX);
-        ys.insert(currentY);
+        xs.insert(currentX+1);
 
-        corrds.emplace_back(currentX, currentY);
+        ys.insert(currentY-1);
+        ys.insert(currentY);
+        ys.insert(currentY+1);
+
+        coordinates.emplace_back(currentX, currentY);
     }
 
-    // Second pass to compress the corrdinates
-    std::map<long,long> xMapping;
-    std::map<long,long> yMapping;
-    auto index = 0;
-    for (const auto &x : xs)
-        xMapping[x] = index+=2;
 
-    index = 0;
-    for (const auto &y : ys)
-        yMapping[y] = index+=2;
+    // Second pass to compress the coordinates
+    std::map<long,long> x_old_to_new;
+    std::map<long,long> y_old_to_new;
 
-    std::vector<Corrd> compressedCorrds;
-    for (const auto &corrd : corrds)
-        compressedCorrds.emplace_back(xMapping[corrd.x], yMapping[corrd.y]);
+    std::map<long,long> x_new_to_old;
+    std::map<long,long> y_new_to_old;
 
-    auto width = (xMapping.size()*2);
-    auto height = (yMapping.size()*2);
+    long previous = 0;
+    for (const auto &x : xs) {
+        x_old_to_new[x] = previous;
+        x_new_to_old[previous]=x;
+        previous++;
+    }
+    long width = previous+1;
+
+    previous = 0;
+    for (const auto &y : ys) {
+        y_old_to_new[y] = previous;
+        y_new_to_old[previous]=y;
+        previous++;
+    }
+    long height = previous+1;
 
     // Populate the board
     std::vector<bool> board(width * height);
-    for(auto r=0;r<width * height;r++) {
+    for(long r=0;r<width * height;r++) {
         board[r]=false;  
     }
 
-    // Start and end locations
-    auto startX = xMapping[0];
-    auto startY = yMapping[0];
-    auto endX = xMapping[currentX];
-    auto endY = yMapping[currentY];
+    // Start and end locations (in compressed form)
+    long startX = x_old_to_new[0];
+    long startY = y_old_to_new[0];
+    long endX = x_old_to_new[currentX];
+    long endY = y_old_to_new[currentY];
 
+    // Build the compressed maze
     currentX = startX;
     currentY = startY;
-    for (const auto &corrd : compressedCorrds)
+    for (const auto &coordinate : coordinates)
     {
-        if (currentX < corrd.x)
+        long c_x = x_old_to_new[coordinate.x];
+        long c_y = y_old_to_new[coordinate.y];
+
+        if (currentX < c_x)
         {
-            for(auto x=currentX;x<corrd.x;x++) {
+            for(auto x=currentX;x<c_x;x++) {
                 currentX++;
                 board[(currentY*width)+currentX]=true;
             }
         }
 
-        if (currentX > corrd.x)
+        if (currentX > c_x)
         {
-            for(auto x=currentX;x>corrd.x;x--) {
+            for(auto x=currentX;x>c_x;x--) {
                 currentX--;
                 board[(currentY*width)+currentX]=true;
             }
         }
 
-        if (currentY < corrd.y)
+        if (currentY < c_y)
         {
-            for(auto y=currentY;y<corrd.y;y++) {
+            for(auto y=currentY;y<c_y;y++) {
                 currentY++;
                 board[(currentY*width)+currentX]=true;
             }
         }
 
-        if (currentY > corrd.y)
+        if (currentY > c_y)
         {
-            for(auto y=currentY;y>corrd.y;y--) {
+            for(auto y=currentY;y>c_y;y--) {
                 currentY--;
                 board[(currentY*width)+currentX]=true;
             }
         }
     }
-
-    std::cout << currentX << std::endl;
-    std::cout << endX << std::endl;
-
-    std::cout << currentY << std::endl;
-    std::cout << endY << std::endl;
- 
 
     // Display the board
     std::ofstream fout("board.txt");
@@ -137,16 +147,16 @@ int main()
     // Make sure the final position isn't wall
     board[(endY*width)+endX]=false;
 
-    std::queue<std::pair<int,int>> queue;  // Position, Distance
-    std::map<int, int> checked;
+    std::queue<std::pair<long,long>> queue;  // Position, Distance
+    std::map<long, int> checked;
 
-    queue.push(std::make_pair((startY*width)+startX, 0));
+    queue.emplace((startY*width)+startX, 0);
     while (!queue.empty())
     {
         auto pos = queue.front();
         queue.pop();
 
-        if (checked.contains(pos.first))
+        if (checked.find(pos.first) != checked.end())
             continue;
         checked[pos.first]=0;
 
@@ -163,33 +173,42 @@ int main()
         if (x > 0)
         {
             auto loc = (y*width)+x-1;
-            if (!board[loc])
-                queue.push(std::make_pair(loc,pos.second+1));
+            if (!board[loc]) {
+                auto offset = (x_new_to_old[(x)] - x_new_to_old[x-1]);
+                queue.emplace(loc,pos.second+offset);
+            }
+        }
+        // Can we go East?
+        if (x < (width-1))
+        {
+            auto loc = (y*width)+x+1;
+            if (!board[loc]) {
+                auto offset = (x_new_to_old[x+1] - x_new_to_old[x]);
+                queue.emplace(loc,pos.second+offset);
+            }
         }
 
         // Can we go North?
         if (y > 0)
         {
             auto loc = ((y-1)*width)+x;
-            if (!board[loc])
-                queue.push(std::make_pair(loc,pos.second+1));
+            if (!board[loc]) {
+                auto offset = (y_new_to_old[(y)] - y_new_to_old[y-1]);
+                queue.emplace(loc,pos.second+offset);
+            }
         }
 
         // Can we go South?
         if (y < (height-1))
         {
             auto loc = ((y+1)*width)+x;
-            if (!board[loc])
-                queue.push(std::make_pair(loc,pos.second+1));
+            if (!board[loc]) {
+                auto offset = (y_new_to_old[y+1] - y_new_to_old[y]);
+                queue.emplace(loc,pos.second+offset);
+            }
         }
 
-        // Can we go East?
-        if (x < (width-1))
-        {
-            auto loc = (y*width)+x+1;
-            if (!board[loc])
-                queue.push(std::make_pair(loc,pos.second+1));
-        }
+
 
     }
     
