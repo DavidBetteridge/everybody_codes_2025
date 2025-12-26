@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "common.cpp"
 #include <queue>
 #include <map>
@@ -9,6 +11,14 @@ struct Corrd
     long y;
 
     Corrd(const long x,const long y) : x(x), y(y) {};
+};
+
+struct vertex
+{
+    long index;
+    long cost;
+
+    vertex(const long index,const long cost) : index(index), cost(cost) {};
 };
 
 int main()
@@ -24,9 +34,13 @@ int main()
     std::set<long> xs;
     std::set<long> ys;
     std::vector<Corrd> coordinates;
+    auto command_count = 0;
+    xs.insert(0);
+    ys.insert(0);
     for (const auto &command : commands)
     {
         auto dir = command[0];
+
         long dist = std::stol(command.substr(1,command.size()-1));
 
         if (dir == 'L')
@@ -39,6 +53,8 @@ int main()
         if (direction == 2) currentX-=dist; //West
         if (direction == 3) currentY-=dist; //North
 
+
+
         xs.insert(currentX-1);
         xs.insert(currentX);
         xs.insert(currentX+1);
@@ -46,6 +62,8 @@ int main()
         ys.insert(currentY-1);
         ys.insert(currentY);
         ys.insert(currentY+1);
+
+        command_count++;
 
         coordinates.emplace_back(currentX, currentY);
     }
@@ -64,7 +82,7 @@ int main()
         x_new_to_old[previous]=x;
         previous++;
     }
-    long width = previous+1;
+    long width = previous-1;
 
     previous = 0;
     for (const auto &y : ys) {
@@ -72,7 +90,7 @@ int main()
         y_new_to_old[previous]=y;
         previous++;
     }
-    long height = previous+1;
+    long height = previous-1;
 
     // Populate the board
     std::vector<bool> board(width * height);
@@ -142,76 +160,143 @@ int main()
         }
         fout<< std::endl;
     }
-    fout<< std::endl;
 
     // Make sure the final position isn't wall
-    board[(endY*width)+endX]=false;
+    auto end_index = (endY*width)+endX;
+    board[end_index]=false;
 
-    std::queue<std::pair<long,long>> queue;  // Position, Distance
-    std::map<long, int> checked;
 
-    queue.emplace((startY*width)+startX, 0);
-    while (!queue.empty())
+
+    const long UNDEFINED_DIST = -1;
+    const long INFINITY_COST = 1000000000;
+    auto cmp = [](const vertex left, const vertex right) { return (left.cost) > (right.cost); };
+    std::priority_queue<vertex, std::vector<vertex>, decltype(cmp)> Q(cmp);
+    std::vector<long> prev;
+    std::vector<long> dist;
+
+    auto start_index = (startY*width)+startX;
+    // std::vector<bool> visited(width * height, false);
+    for(long v=0;v<width*height;v++)
     {
-        auto pos = queue.front();
-        queue.pop();
+        dist.push_back(INFINITY_COST);
+        prev.push_back(UNDEFINED_DIST);
+        // if (v != start_index)
+        //     Q.emplace(v,INFINITY_COST);
+    }
 
-        if (checked.find(pos.first) != checked.end())
+    Q.emplace(start_index,0);
+
+    dist[start_index] = 0;
+
+    while (!Q.empty()) {
+        auto u = Q.top();
+        Q.pop();
+
+        if (u.cost != dist[u.index])
             continue;
-        checked[pos.first]=0;
 
-        auto x = pos.first % width;
-        auto y = (pos.first - x) / width;
+        // if (visited[u.index]) continue;
+        // visited[u.index] = true;
 
-        if (x == endX && y == endY)
-        {
-            std::cout << pos.second << std::endl;
-            return 0;
-        }
-
-        // Can we go West?
-        if (x > 0)
-        {
-            auto loc = (y*width)+x-1;
-            if (!board[loc]) {
-                auto offset = (x_new_to_old[(x)] - x_new_to_old[x-1]);
-                queue.emplace(loc,pos.second+offset);
-            }
-        }
-        // Can we go East?
-        if (x < (width-1))
-        {
-            auto loc = (y*width)+x+1;
-            if (!board[loc]) {
-                auto offset = (x_new_to_old[x+1] - x_new_to_old[x]);
-                queue.emplace(loc,pos.second+offset);
-            }
-        }
+        auto index = u.index;
+        auto x = index % width;
+        auto y = (index - x) / width;
 
         // Can we go North?
-        if (y > 0)
+        auto v = index-width;
+        if (y>0 && !board[v])
         {
-            auto loc = ((y-1)*width)+x;
-            if (!board[loc]) {
-                auto offset = (y_new_to_old[(y)] - y_new_to_old[y-1]);
-                queue.emplace(loc,pos.second+offset);
+            long cost = (y_new_to_old[(y)] - y_new_to_old[y-1]);
+            if (cost < 0) {
+                std::cout << y_new_to_old[(y)] - y_new_to_old[y-1] << std::endl;
+                assert(false);
+            }
+            long  alt = dist[u.index] + cost;
+            if (alt < dist[v])
+            {
+                prev[v] = u.index;
+                dist[v] = alt;
+                Q.emplace(v,alt); //Q.decrease_priority(v, alt)
             }
         }
 
-        // Can we go South?
-        if (y < (height-1))
+        //Down
+        v = index+width;
+        if (y<(height-1) && !board[v])
         {
-            auto loc = ((y+1)*width)+x;
-            if (!board[loc]) {
-                auto offset = (y_new_to_old[y+1] - y_new_to_old[y]);
-                queue.emplace(loc,pos.second+offset);
+            long  cost = (y_new_to_old[y+1] - y_new_to_old[y]);
+            assert(cost > 0);
+            long  alt = dist[u.index] + cost;
+            if (alt < dist[v])
+            {
+                prev[v] = u.index;
+                dist[v] = alt;
+                Q.emplace(v,alt); //Q.decrease_priority(v, alt)
             }
         }
 
+        //Left
+        v = index-1;
+        if ((x>0) && !board[v] )
+        {
+            long  cost = (x_new_to_old[(x)] - x_new_to_old[x-1]);
+            assert(cost > 0);
+            long  alt = dist[u.index] + cost;
+            if (alt < dist[v])
+            {
+                prev[v] = u.index;
+                dist[v] = alt;
+                Q.emplace(v,alt); //Q.decrease_priority(v, alt)
+            }
+        }
 
-
+        //Right
+        v = index+1;
+        if ((x<(width-1)) && !board[v])
+        {
+            long  cost = (x_new_to_old[x+1] - x_new_to_old[x]);
+            assert(cost > 0);
+            long  alt = dist[u.index] + cost;
+            if (alt < dist[v])
+            {
+                prev[v] = u.index;
+                dist[v] = alt;
+                Q.emplace(v,alt); //Q.decrease_priority(v, alt)
+            }
+        }
     }
-    
-    std::cout << "No solution" << std::endl;
 
+    if (dist[end_index] == INFINITY_COST) {
+        std::cout << "No path to end\n";
+        return 0;
+    }
+
+    // Display the path to the end point
+    auto location = end_index;
+    std::set<long> path;
+    while (location != start_index) {
+        path.insert(location);
+        location = prev[location];
+    }
+
+    // Display the board
+    std::ofstream fout2("board2txt");
+    for(auto r=0;r<height;r++) {
+        for(auto c=0;c<width;c++) {
+            long loc = (r*width)+c;
+            if (path.find(loc) != path.end() )
+                fout2<< 'X';
+            else if (r == startY && c == startX)
+                fout2<< 'S';
+            else if (r == endY && c == endX)
+                fout2<< 'E';
+            else if (board[(r*width)+c])
+                fout2<< '#';
+            else
+                fout2<< ' ';
+        }
+        fout2<< std::endl;
+    }
+
+    std::cout << dist[end_index] << std::endl;
 }
